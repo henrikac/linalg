@@ -6,7 +6,7 @@ class Linalg::Vector(T)
   # vec # => []
   # ```
   def initialize
-    {% raise "T must be a number" unless T < Number %}
+    {% raise "T must be an integer or a float" unless T < Number::Primitive %}
     @elements = Array(T).new
   end
 
@@ -17,7 +17,7 @@ class Linalg::Vector(T)
   # vec # => [1, 2, 3]
   # ```
   def initialize(@elements : Array(T))
-    {% raise "T must be a number" unless T < Number %}
+    {% raise "T must be an integer or a float" unless T < Number::Primitive %}
   end
 
   # Creates a new `Vector` of given *size* filled with zeros.
@@ -29,7 +29,11 @@ class Linalg::Vector(T)
   # vec2 # => [0.0, 0.0, 0.0]
   # ```
   def initialize(size : Int)
-    {% raise "T must be a number" unless T < Number %}
+    {% raise "T must be an integer or a float" unless T < Number::Primitive %}
+    if size < 0
+      raise ArgumentError.new("Negative vector size: #{size}")
+    end
+
     @elements = Array(T).new(size) { T.zero }
   end
 
@@ -41,6 +45,83 @@ class Linalg::Vector(T)
   # Sets the given *value* at the given *index*.
   def []=(index : Int, value : T)
     @elements[index] = value
+  end
+
+  # Appends the given *value* to the end of the vector.
+  def <<(value : T)
+    @elements << value
+  end
+
+  # Returns `true` if each element in `self` is equal to each
+  # corresponding element in *other*.
+  def ==(other : Linalg::Vector)
+    return false if self.size != other.size
+
+    self.each_with_index do |elem, i|
+      return false if elem != other[i]
+    end
+    return true
+  end
+
+  # Scaling. Scales `self` by the given *scalar* and returns a new `Linalg::Vector`.
+  #
+  # ```
+  # vec = Linalg::Vector.new([1, 2, 3])
+  # scalar = 2
+  #
+  # scaled_vec = vec * scalar
+  # scaled_vec # => [2, 4, 6]
+  # ```
+  def *(scalar : U) forall U
+    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+
+    vec = generate_vector(T, U)
+    self.each do |elem|
+      vec << elem * scalar
+    end
+    return vec
+  end
+
+  # Vector addition. Adds `self` and *other* together and returns a new `Linalg::Vector`.
+  #
+  # ```
+  # vec1 = Linalg::Vector.new([1, 2, 3])
+  # vec2 = Linalg::Vector.new([2.1, 3.2, 4.3])
+  #
+  # vec3 = vec1 + vec2
+  # vec3 # => [3.1, 5.2, 7.3]
+  # ```
+  def +(other : Linalg::Vector(U)) forall U
+    if self.size != other.size
+      raise ArgumentError.new("vectors must be same size")
+    end
+
+    vec = generate_vector(T, U)
+    self.each_with_index do |elem, i|
+      vec << elem + other[i]
+    end
+    return vec
+  end
+
+  # Vector subtraction. Subtracts *other* from `self` and returns a new `Linalg::Vector`.
+  #
+  # ```
+  # vec1 = Linalg::Vector.new([2, 3, 4])
+  # vec2 = Linalg::Vector.new([1, 2, 3])
+  #
+  # vec3 = vec1 - vec2
+  # vec3 # => [1, 1, 1]
+  # ```
+  def -(other : Linalg::Vector(U)) forall U
+    if self.size != other.size
+      raise ArgumentError.new("vectors must be same size")
+    end
+
+    vec = generate_vector(T, U)
+    self.each_with_index do |elem, i|
+      vec << elem - other[i]
+    end
+    return vec
   end
 
   # Iterates over the collection, yielding the elements.
@@ -71,5 +152,15 @@ class Linalg::Vector(T)
     io << "["
     @elements.join(STDOUT, ", ") { |i, io| io << i }
     io << "]"
+  end
+
+  private def generate_vector(t1 : A.class, t2 : B.class) forall A, B
+    vec = nil
+    {% if !(A < Float) && B < Float %}
+      vec = Linalg::Vector(B).new
+    {% else %}
+      vec = Linalg::Vector(A).new
+    {% end %}
+    return vec
   end
 end
