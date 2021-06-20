@@ -222,6 +222,48 @@ describe Linalg::Vector do
     end
   end
 
+  describe "*(dot)" do
+    it "should return the product" do
+      vec1 = Linalg::Vector.new([-3.0, 7.0, 9.0])
+      vec2 = Linalg::Vector.new([2, 0, 10])
+
+      expected = 84
+      actual = vec1.dot(vec2)
+
+      actual.should eq expected
+    end
+
+    it "should raise an ArgumentError if the vectors are not the same size" do
+      vec1 = Linalg::Vector.new([1, 2, 3])
+      vec2 = Linalg::Vector.new([1, 2])
+
+      expect_raises(ArgumentError) do
+        vec1.dot(vec2)
+      end
+    end
+  end
+
+  describe "dot" do
+    it "should return the product" do
+      vec1 = Linalg::Vector.new([-3.0, 7.0, 9.0])
+      vec2 = Linalg::Vector.new([2, 0, 10])
+
+      expected = 84
+      actual = vec1.dot(vec2)
+
+      actual.should eq expected
+    end
+
+    it "should raise an ArgumentError if the vectors are not the same size" do
+      vec1 = Linalg::Vector.new([1, 2, 3])
+      vec2 = Linalg::Vector.new([1, 2])
+
+      expect_raises(ArgumentError) do
+        vec1.dot(vec2)
+      end
+    end
+  end
+
   describe "each" do
     it "should yield each element" do
       tests = [

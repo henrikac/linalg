@@ -1,5 +1,8 @@
 class Linalg::Vector(T)
-  # Creates a new empty `Vector`.
+  # Elements in the vector
+  @elements : Array(T)
+
+  # Creates a new empty vector.
   #
   # ```
   # vec = Linalg::Vector(Int32).new
@@ -10,7 +13,7 @@ class Linalg::Vector(T)
     @elements = Array(T).new
   end
 
-  # Creates a new `Vector` filled with the given *elements*.
+  # Creates a new vector filled with the given *elements*.
   #
   # ```
   # vec = Linalg::Vector.new([1, 2, 3])
@@ -20,7 +23,7 @@ class Linalg::Vector(T)
     {% raise "T must be an integer or a float" unless T < Number::Primitive %}
   end
 
-  # Creates a new `Vector` of given *size* filled with zeros.
+  # Creates a new vector of given *size* filled with zeros.
   #
   # ```
   # vec = Linalg::Vector(Int32).new(3)
@@ -82,6 +85,14 @@ class Linalg::Vector(T)
     return vec
   end
 
+  # Dot product. Returns the dot product of `self` and other.
+  #
+  # NOTE: Same as `Linalg::Vector#dot`.
+  def *(other : Linalg::Vector(U)) forall U
+    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+    self.dot(other)
+  end
+
   # Vector addition. Adds `self` and *other* together and returns a new `Linalg::Vector`.
   #
   # ```
@@ -114,7 +125,7 @@ class Linalg::Vector(T)
   # ```
   def -(other : Linalg::Vector(U)) forall U
     if self.size != other.size
-      raise ArgumentError.new("vectors must be same size")
+      raise ArgumentError.new("vectors must be the same size")
     end
 
     vec = generate_vector(T, U)
@@ -122,6 +133,20 @@ class Linalg::Vector(T)
       vec << elem - other[i]
     end
     return vec
+  end
+
+  # Returns the dot product of `self` and *other*.
+  def dot(other : Linalg::Vector(U)) forall U
+    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+    if self.size != other.size
+      raise ArgumentError.new("vectors must be the same size")
+    end
+
+    sum = 0
+    self.each_with_index do |elem, i|
+      sum += elem * other[i]
+    end
+    return sum
   end
 
   # Iterates over the collection, yielding the elements.
