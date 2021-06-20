@@ -264,6 +264,29 @@ describe Linalg::Vector do
     end
   end
 
+  describe "*(other : Matrix)" do
+    it "should perform vector-matrix multiplication" do
+      vec = Linalg::Vector.new([2.0, 3.0, 4.0])
+      mat = Linalg::Matrix.new([[5, 2, 6], [7, 2, 5], [1, 4, 2]])
+
+      expected = [35.0, 26.0, 35.0]
+      actual = vec * mat
+
+      actual.each_with_index do |elem, i|
+        elem.should eq expected[i]
+      end
+    end
+
+    it "should raise an ArgumentError if matrix has fewer rows than vector.size" do
+      vec = Linalg::Vector.new([2.0, 3.0, 4.0])
+      mat = Linalg::Matrix.new([[5, 6], [7, 5]])
+
+      expect_raises(ArgumentError) do
+        vec * mat
+      end
+    end
+  end
+
   describe "each" do
     it "should yield each element" do
       tests = [

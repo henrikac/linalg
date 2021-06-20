@@ -1,3 +1,5 @@
+require "./helpers/**"
+
 class Linalg::Vector(T)
   # Elements in the vector
   @elements : Array(T)
@@ -93,6 +95,34 @@ class Linalg::Vector(T)
     self.dot(other)
   end
 
+  # Vector-matrix multiplication.
+  #
+  # ```
+  # vec = Linalg::Vector.new([2.0, 3.0, 4.0])
+  # mat = Linalg::Matrix.new([[5, 2, 6], [7, 2, 5], [1, 4, 2]])
+  # vec * mat # => [35.0, 26.0, 35.0]
+  # ```
+  def *(other : Linalg::Matrix(U)) forall U
+    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+    if other.rows != self.size
+      raise ArgumentError.new("expected matrix with dimension #{self.size} x c")
+    end
+
+    vec = generate_vector(T, U)
+
+    i = 0
+    other.columns.times do
+      col = Linalg::Vector(U).new
+
+      other.each { |r| col << r[i] }
+
+      vec << self * col
+      i += 1
+    end
+
+    return vec
+  end
+
   # Vector addition. Adds `self` and *other* together and returns a new `Linalg::Vector`.
   #
   # ```
@@ -143,6 +173,9 @@ class Linalg::Vector(T)
     end
 
     sum = 0
+    {% if T < Float || U < Float %}
+      sum = 0.0
+    {% end %}
     self.each_with_index do |elem, i|
       sum += elem * other[i]
     end
@@ -177,15 +210,5 @@ class Linalg::Vector(T)
     io << "["
     @elements.join(STDOUT, ", ") { |i, io| io << i }
     io << "]"
-  end
-
-  private def generate_vector(t1 : A.class, t2 : B.class) forall A, B
-    vec = nil
-    {% if !(A < Float) && B < Float %}
-      vec = Linalg::Vector(B).new
-    {% else %}
-      vec = Linalg::Vector(A).new
-    {% end %}
-    return vec
   end
 end
