@@ -80,7 +80,7 @@ class Linalg::Vector(T)
   def *(scalar : U) forall U
     {% raise "U must be an integer or a float" unless U < Number::Primitive %}
 
-    vec = generate_vector(T, U)
+    vec = generate_vector({{T}}, {{U}})
     self.each do |elem|
       vec << elem * scalar
     end
@@ -135,7 +135,8 @@ class Linalg::Vector(T)
       raise ArgumentError.new("vectors must be same size")
     end
 
-    vec = generate_vector(T, U)
+    vec = generate_vector({{T}}, {{U}})
+    # Error: undefined constant U :/
     self.each_with_index do |elem, i|
       vec << elem + other[i]
     end
@@ -156,7 +157,7 @@ class Linalg::Vector(T)
       raise ArgumentError.new("vectors must be the same size")
     end
 
-    vec = generate_vector(T, U)
+    vec = generate_vector({{T}}, {{U}})
     self.each_with_index do |elem, i|
       vec << elem - other[i]
     end

@@ -166,7 +166,7 @@ class Linalg::Matrix(T)
   # ```
   def *(scalar : U) forall U
     {% raise "U must be an integer or a float" unless U < Number::Primitive %}
-    mat = generate_matrix(T, U)
+    mat = generate_matrix({{T}}, {{U}})
 
     @elements.each { |r| mat << r * scalar }
 
@@ -185,7 +185,7 @@ class Linalg::Matrix(T)
       raise ArgumentError.new("expected vector of size #{self.columns}")
     end
     
-    vec = generate_vector(T, U)
+    vec = generate_vector({{T}}, {{U}})
 
     @elements.each do |row|
       sum = 0
@@ -231,7 +231,7 @@ class Linalg::Matrix(T)
       raise ArgumentError.new("cannot perform matrix addition of matrices with different dimensions")
     end
 
-    mat = generate_matrix(T, U)
+    mat = generate_matrix({{T}}, {{U}})
 
     @elements.each_with_index do |row, i|
       mat << row + other[i]
@@ -254,7 +254,7 @@ class Linalg::Matrix(T)
       raise ArgumentError.new("cannot perform matrix subtraction of matrices with different dimensions")
     end
 
-    mat = generate_matrix(T, U)
+    mat = generate_matrix({{T}}, {{U}})
 
     @elements.each_with_index do |row, i|
       mat << row - other[i]
@@ -297,14 +297,14 @@ class Linalg::Matrix(T)
       raise ArgumentError.new("expected m x n * n x p matrices")
     end
 
-    mat = generate_matrix(T, U)
+    mat = generate_matrix({{T}}, {{U}})
 
     @elements.each do |row|
-      row_dots = generate_vector(T, U)
+      row_dots = generate_vector({{T}}, {{U}})
 
       col = 0
       other.columns.times do
-        vec = generate_vector(T, U)
+        vec = generate_vector({{T}}, {{U}})
 
         other.each do |other_row|
           vec << other_row[col]
