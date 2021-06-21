@@ -181,7 +181,6 @@ class Linalg::Matrix(T)
   # mat * vec # => [40.0, 40.0, 22.0]
   # ```
   def *(other : Linalg::Vector(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if other.size != self.columns
       raise ArgumentError.new("expected vector of size #{self.columns}")
     end
@@ -214,8 +213,7 @@ class Linalg::Matrix(T)
   # ```
   #
   # NOTE: Same as `Linalg::Matrix#product`
-  def *(other : Linalg::Matrix(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+  def *(other : Linalg::Matrix)
     return self.product(other)
   end
 
@@ -229,7 +227,6 @@ class Linalg::Matrix(T)
   # mat3 # => [[5.0, 1.0, 9.0], [6.0, 14.0, 3.0], [3.0, 13.0, 10.0]]
   # ```
   def +(other : Linalg::Matrix(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if self.rows != other.rows || self.columns != other.columns
       raise ArgumentError.new("cannot perform matrix addition of matrices with different dimensions")
     end
@@ -253,7 +250,6 @@ class Linalg::Matrix(T)
   # mat3 # => [[-3.0, 3.0, -3.0], [2.0, -4.0, 9.0], [11.0, 3.0, 8.0]]
   # ```
   def -(other : Linalg::Matrix(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if self.rows != other.rows || self.columns != other.columns
       raise ArgumentError.new("cannot perform matrix subtraction of matrices with different dimensions")
     end
@@ -297,7 +293,6 @@ class Linalg::Matrix(T)
   # product # => [[15, 5], [5, -12]]
   # ```
   def product(other : Linalg::Matrix(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if self.columns != other.rows
       raise ArgumentError.new("expected m x n * n x p matrices")
     end

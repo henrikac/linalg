@@ -90,8 +90,7 @@ class Linalg::Vector(T)
   # Dot product. Returns the dot product of `self` and other.
   #
   # NOTE: Same as `Linalg::Vector#dot`.
-  def *(other : Linalg::Vector(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+  def *(other : Linalg::Vector)
     self.dot(other)
   end
 
@@ -103,7 +102,6 @@ class Linalg::Vector(T)
   # vec * mat # => [35.0, 26.0, 35.0]
   # ```
   def *(other : Linalg::Matrix(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if other.rows != self.size
       raise ArgumentError.new("expected matrix with dimension #{self.size} x c")
     end
@@ -167,7 +165,6 @@ class Linalg::Vector(T)
 
   # Returns the dot product of `self` and *other*.
   def dot(other : Linalg::Vector(U)) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
     if self.size != other.size
       raise ArgumentError.new("vectors must be the same size")
     end
