@@ -36,13 +36,18 @@ class Linalg::Matrix(T)
     {% raise "T must be an integer or a float" unless T < Number::Primitive %}
     @elements = Array(Linalg::Vector(T)).new
     @rows = elements.size
-    @columns = elements[0].size 
 
-    elements.each do |elem|
-      if elem.size != @columns
-        raise ArgumentError.new("elements must have the same size")
+    if elements.empty?
+      @columns = 0
+    else
+      @columns = elements[0].size 
+
+      elements.each do |elem|
+        if elem.size != @columns
+          raise ArgumentError.new("Elements must have the same size")
+        end
+        @elements << Linalg::Vector(T).new(elem)
       end
-      @elements << Linalg::Vector(T).new(elem)
     end
   end
 
@@ -61,12 +66,58 @@ class Linalg::Matrix(T)
   def initialize(@elements : Array(Linalg::Vector(T)))
     {% raise "T must be an integer or a float" unless T < Number::Primitive %}
     @rows = @elements.size
-    @columns = @elements[0].size 
 
-    @elements.each do |elem|
-      if elem.size != @columns
-        raise ArgumentError.new("vectors must have the same size")
+    if @elements.empty?
+      @columns = 0
+    else
+      @columns = @elements[0].size 
+
+      @elements.each do |elem|
+        if elem.size != @columns
+          raise ArgumentError.new("Vectors must have the same size")
+        end
       end
+    end
+  end
+
+  # Creates a new zero matrix with dimensions *row* x *columns*.
+  #
+  # ```
+  # Linalg::Matrix(Float64).new(2, 2) # => [[0.0, 0.0], [0.0, 0.0]]
+  # Linalg::Matrix(Int32).new(2, 3) # => [[0, 0, 0], [0, 0, 0]]
+  # ```
+  def initialize(@rows : Int, @columns : Int)
+    if @rows == 0
+      @elements = Array(Linalg::Vector(T)).new
+    else
+      @elements = Array(Linalg::Vector(T)).new(@rows) { Linalg::Vector(T).new(@columns) }
+    end
+  end
+
+  # Creates a new identity matrix of the given *size*.
+  #
+  # ```
+  # Linalg::Matrix(Int32).new(1) # => [[1]]
+  # Linalg::Matrix(Int32).new(2) # => [[1, 0], [0, 1]]
+  # Linalg::Matrix(Float64).new(3) # => [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+  # ```
+  # An `ArgumentError` is raised if the given *size* is less than 1.
+  def initialize(size : Int)
+    if size < 1
+      raise ArgumentError.new("Expected size greater than or equal to 1")
+    end
+
+    @rows = size
+    @columns = size
+
+    @elements = Array(Linalg::Vector(T)).new
+
+    i = 0
+    size.times do
+      vec = Linalg::Vector(T).new(size)
+      vec[i] = 1
+      @elements << vec
+      i += 1
     end
   end
 
@@ -120,8 +171,8 @@ class Linalg::Matrix(T)
   # An `ArgumentError` is raised if the given array doesn't have the same
   # size as the vectors already in the matrix.
   def <<(value : Array(T))
-    if !self.empty? && value.size != self.columns
-      raise ArgumentError.new("expected an array of size #{self.columns}")
+    if !empty? && value.size != self.columns
+      raise ArgumentError.new("Expected an array of size #{self.columns}")
     end
 
     @elements << Linalg::Vector.new(value)
@@ -144,8 +195,8 @@ class Linalg::Matrix(T)
   # An `ArgumentError` is raised if the given vector doesn't have the same
   # size as the vectors already in the matrix.
   def <<(value : Linalg::Vector(T))
-    if !self.empty? && value.size != self.columns
-      raise ArgumentError.new("expected a vector of size #{self.columns}")
+    if !empty? && value.size != self.columns
+      raise ArgumentError.new("Expected a vector of size #{self.columns}")
     end
 
     @elements << value
@@ -157,6 +208,18 @@ class Linalg::Matrix(T)
     @rows += 1
   end
 
+  # Returns `true` if each element in `self` is equal to each
+  # corresponding element in *other*.
+  def ==(other : Linalg::Matrix)
+    return false if self.rows != other.rows || self.columns != other.columns
+
+    each_with_index do |row, i|
+      return false if row != other[i]
+    end
+
+    return true
+  end
+
   # Scales all the vectors in `self` by the given *scalar* and return a new `Linalg::Matrix`.
   #
   # ```
@@ -165,10 +228,10 @@ class Linalg::Matrix(T)
   # scaled_mat # => [[2.0, 4.0, 6.0], [8.0, 10.0, 12.0], [14.0, 16.0, 18.0]]
   # ```
   def *(scalar : U) forall U
-    {% raise "U must be an integer or a float" unless U < Number::Primitive %}
+    {% raise "Scalar must be an integer or a float" unless U < Number::Primitive %}
     mat = generate_matrix({{T}}, {{U}})
 
-    @elements.each { |r| mat << r * scalar }
+    each { |r| mat << r * scalar }
 
     return mat
   end
@@ -182,12 +245,12 @@ class Linalg::Matrix(T)
   # ```
   def *(other : Linalg::Vector(U)) forall U
     if other.size != self.columns
-      raise ArgumentError.new("expected vector of size #{self.columns}")
+      raise ArgumentError.new("Expected vector of size #{self.columns}")
     end
     
     vec = generate_vector({{T}}, {{U}})
 
-    @elements.each do |row|
+    each do |row|
       sum = 0
       {% if T < Float || U < Float %}
         sum = 0.0
@@ -228,12 +291,12 @@ class Linalg::Matrix(T)
   # ```
   def +(other : Linalg::Matrix(U)) forall U
     if self.rows != other.rows || self.columns != other.columns
-      raise ArgumentError.new("cannot perform matrix addition of matrices with different dimensions")
+      raise ArgumentError.new("Cannot perform matrix addition of matrices with different dimensions")
     end
 
     mat = generate_matrix({{T}}, {{U}})
 
-    @elements.each_with_index do |row, i|
+    each_with_index do |row, i|
       mat << row + other[i]
     end
 
@@ -251,12 +314,12 @@ class Linalg::Matrix(T)
   # ```
   def -(other : Linalg::Matrix(U)) forall U
     if self.rows != other.rows || self.columns != other.columns
-      raise ArgumentError.new("cannot perform matrix subtraction of matrices with different dimensions")
+      raise ArgumentError.new("Cannot perform matrix subtraction of matrices with different dimensions")
     end
 
     mat = generate_matrix({{T}}, {{U}})
 
-    @elements.each_with_index do |row, i|
+    each_with_index do |row, i|
       mat << row - other[i]
     end
 
@@ -294,7 +357,7 @@ class Linalg::Matrix(T)
   # ```
   def product(other : Linalg::Matrix(U)) forall U
     if self.columns != other.rows
-      raise ArgumentError.new("expected m x n * n x p matrices")
+      raise ArgumentError.new("Expected m x n * n x p matrices")
     end
 
     mat = generate_matrix({{T}}, {{U}})
@@ -335,7 +398,7 @@ class Linalg::Matrix(T)
   # mat # => [[1, 2], [3, 4], [5, 6]]
   # ```
   def transpose
-    return typeof(self).new if self.empty?
+    return typeof(self).new if empty?
 
     mat = typeof(self).new
 
@@ -343,13 +406,49 @@ class Linalg::Matrix(T)
     self.columns.times do
       vec = Linalg::Vector(T).new
 
-      self.each { |r| vec << r[i] }
+      each { |r| vec << r[i] }
 
       i += 1
       mat << vec
     end
 
     return mat
+  end
+
+  # Returns `true` if `self` is a zero matrix, otherwise `false`.
+  #
+  # NOTE: An empty matrix is not considered a zero matrix.
+  def zero?
+    return false if empty?
+
+    each do |row|
+      return false if row.empty?
+
+      row.each do |elem|
+        return false if elem != 0
+      end
+    end
+
+    return true
+  end
+
+  # Return `true` if `self` is an identity matrix, otherwise `false`.
+  def identity?
+    return false if empty?
+
+    each_with_index do |row, i|
+      return false if row.empty?
+
+      row.each_with_index do |elem, j|
+        if j == i
+          return false if elem != 1
+        else
+          return false if elem != 0
+        end
+      end
+    end
+
+    return true
   end
 
   def to_s(io : IO) : Nil
