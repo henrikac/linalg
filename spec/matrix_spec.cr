@@ -110,6 +110,99 @@ describe Linalg::Matrix do
     end
   end
 
+  describe "get_column" do
+    it "should return the requested column" do
+      mat = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+      column = 2
+
+      expected = [3, 6, 9]
+      actual = mat.get_column(column)
+
+      actual.empty?.should be_false
+      actual.each_with_index do |elem, i|
+        elem.should eq expected[i]
+      end
+    end
+
+    it "should raise an IndexError if less than 0" do
+      mat = Linalg::Matrix.new([[5, 1, 2, 4], [4, 2, 4, 3], [5, 2, 1, 5]])
+
+      expect_raises(IndexError) do
+        mat.get_column(-1)
+      end
+    end
+
+    it "should raise an IndexError if greater than columns in the matrix" do
+      mat = Linalg::Matrix.new([[5, 1, 2, 4], [4, 2, 4, 3], [5, 2, 1, 5]])
+
+      expect_raises(IndexError) do
+        mat.get_column(4)
+      end
+    end
+  end
+
+  describe "append_column" do
+    it "should correctly append array to a non-empty matrix as a column" do
+      mat = Linalg::Matrix.new([[1, 2], [4, 5], [7, 8]])
+      column = [3, 6, 9]
+
+      expected = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+      mat.append_column(column)
+
+      mat.rows.should eq expected.rows
+      mat.columns.should eq expected.columns
+      mat.should eq expected
+    end
+
+    it "should correctly append vector to a non-empty matrix as a column" do
+      mat = Linalg::Matrix.new([[1, 2], [4, 5], [7, 8]])
+      column = Linalg::Vector.new([3, 6, 9])
+
+      expected = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+      mat.append_column(column)
+
+      mat.rows.should eq expected.rows
+      mat.columns.should eq expected.columns
+      mat.should eq expected
+    end
+
+    it "should correctly append array to an empty matrix as a column" do
+      mat = Linalg::Matrix(Int32).new
+      column = [3, 6, 9]
+
+      expected = Linalg::Matrix.new([[3], [6], [9]])
+      
+      mat.append_column(column)
+
+      mat.rows.should eq expected.rows
+      mat.columns.should eq expected.columns
+      mat.should eq expected
+    end
+
+    it "should correctly append vector to an empty matrix as a column" do
+      mat = Linalg::Matrix(Int32).new
+      column = Linalg::Vector.new([3, 6, 9])
+
+      expected = Linalg::Matrix.new([[3], [6], [9]])
+
+      mat.append_column(column)
+
+      mat.rows.should eq expected.rows
+      mat.columns.should eq expected.columns
+      mat.should eq expected
+    end
+
+    it "should raise an ArgumentError if the size of the given column != the number of rows in the non-empty matrix" do
+      mat = Linalg::Matrix.new([[1, 2], [4, 5], [7, 8]])
+
+      expect_raises(ArgumentError) do
+        mat.append_column([3, 6])
+      end
+    end
+  end
+
   describe "*(scalar)" do
     it "should scale all vectors in the matrix by the given scalar" do
       mat = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])

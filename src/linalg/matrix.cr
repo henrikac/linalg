@@ -87,6 +87,7 @@ class Linalg::Matrix(T)
   # Linalg::Matrix(Int32).new(2, 3) # => [[0, 0, 0], [0, 0, 0]]
   # ```
   def initialize(@rows : Int, @columns : Int)
+    {% raise "T must be an integer or a float" unless T < Number::Primitive %}
     if @rows == 0
       @elements = Array(Linalg::Vector(T)).new
     else
@@ -103,6 +104,7 @@ class Linalg::Matrix(T)
   # ```
   # An `ArgumentError` is raised if the given *size* is less than 1.
   def initialize(size : Int)
+    {% raise "T must be an integer or a float" unless T < Number::Primitive %}
     if size < 1
       raise ArgumentError.new("Expected size greater than or equal to 1")
     end
@@ -158,6 +160,52 @@ class Linalg::Matrix(T)
   # ```
   def []=(row : Int, col : Int, value : T)
     @elements[row][col] = value
+  end
+
+  # Returns the column at the given *index*.
+  # Assumes that `self` is a non-empty `Linalg::Matrix` with at least 1 column.
+  #
+  # ```
+  # mat = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+  # mat.get_column(1) # => [2, 5, 8]
+  # ```
+  def get_column(index : Int) : Linalg::Vector(T)
+    if empty? || index < 0 || index > self.columns - 1
+      raise IndexError.new
+    end
+
+    vec = Linalg::Vector(T).new
+    
+    each { |r| vec << r[index] }
+
+    return vec
+  end
+
+  # Appends the given *column* to `self`.
+  #
+  # ```
+  # mat = Linalg::Matrix.new([[1, 2], [4, 5], [7, 8]])
+  # mat.append_column([3, 6, 9])
+  # mat # => [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+  # ```
+  def append_column(column : Array(T))
+    append_column(Linalg::Vector(T).new(column))
+  end
+
+  # :ditto:
+  def append_column(column : Linalg::Vector(T))
+    if empty?
+      column.each do |elem|
+        self << Linalg::Vector(T).new([elem])
+      end
+    else
+      if column.size != self.rows
+        raise ArgumentError.new("Expected column of size #{self.rows}")
+      end
+
+      each_with_index { |r, i| r << column[i] }
+      @columns += 1
+    end
   end
 
   # Append. Converts the given array into a `Linalg::Vector` and appends it to `self`.
@@ -423,10 +471,7 @@ class Linalg::Matrix(T)
 
     each do |row|
       return false if row.empty?
-
-      row.each do |elem|
-        return false if elem != 0
-      end
+      return false if !row.zero?
     end
 
     return true

@@ -25,7 +25,7 @@ class Linalg::Vector(T)
     {% raise "T must be an integer or a float" unless T < Number::Primitive %}
   end
 
-  # Creates a new vector of given *size* filled with zeros.
+  # Creates a new zero vector of the given *size*.
   #
   # ```
   # vec = Linalg::Vector(Int32).new(3)
@@ -202,6 +202,19 @@ class Linalg::Vector(T)
   # Returns the number of elements in the vector.
   def size
     @elements.size
+  end
+
+  # Return `true` if `self` is a zero vector, otherwise `false`.
+  #
+  # NOTE: An empty vector is not considered a zero vector.
+  def zero?
+    return false if empty?
+
+    each do |elem|
+      return false if elem != 0
+    end
+
+    return true
   end
 
   def to_s(io : IO) : Nil

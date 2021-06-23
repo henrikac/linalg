@@ -349,4 +349,24 @@ describe Linalg::Vector do
       vec.size.should eq 14
     end
   end
+
+  describe "zero?" do
+    it "should return true if the vector is a zero vector" do
+      zero_vec = Linalg::Vector(Int32).new(5)
+
+      zero_vec.zero?.should be_true
+    end
+
+    it "should return false if the vector is not a zero vector" do
+      vec = Linalg::Vector(Int32).new([0, 0, 0, 1, 0])
+
+      vec.zero?.should be_false
+    end
+
+    it "should return false if the vector is empty" do
+      vec = Linalg::Vector(Int32).new
+
+      vec.zero?.should be_false
+    end
+  end
 end
