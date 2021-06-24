@@ -351,6 +351,18 @@ class Linalg::Matrix(T)
     return mat
   end
 
+  # Unary operator. Returns the inverted matrix to `self`.
+  #
+  # ```
+  # mat = Linalg::Matrix.new([[-1, 2, -3], [-4, -5, -6], [7, -8, 9]])
+  # -mat # => [[1, -2, 3], [4, 5, 6], [-7, 8, -9]]
+  # ```
+  def - : self
+    mat = Linalg::Matrix(T).new
+    each { |r| mat << -r }
+    return mat
+  end
+
   # Matrix subtraction. Subtracts *other* from `self` and returns a new `Linalg::Matrix`.
   #
   # ```

@@ -217,6 +217,63 @@ describe Linalg::Matrix do
         end
       end
     end
+
+    it "(st)A = s(tA)" do
+      tests = [
+        {s: 2, t: 3},
+        {s: 1, t: 2},
+        {s: 4, t: 3},
+        {s: -1, t: 1},
+        {s: 3, t: -1}
+      ]
+
+      tests.each do |test|
+        s = test[:s]
+        t = test[:t]
+        mat = Linalg::Matrix.new([[1, 2], [3, 4]])
+
+        lhs = mat * (s * t)
+        rhs = (mat * t) * s
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "s(A + B) = sA + sB" do
+      mata = Linalg::Matrix.new([[1, 2], [3, 4]])
+      matb = Linalg::Matrix.new([[4, 3], [2, 1]])
+      s = 1
+
+      10.times do
+        lhs = (mata + matb) * s
+        rhs = mata * s + matb * s
+
+        lhs.should eq rhs
+
+        s += 1
+      end
+    end
+
+    it "(s + t)A = sA + tA" do
+      tests = [
+        {s: 2, t: 3},
+        {s: 1, t: 2},
+        {s: 4, t: 3},
+        {s: -1, t: 1},
+        {s: 3, t: -1}
+      ]
+
+      tests.each do |test|
+        s = test[:s]
+        t = test[:t]
+        mat = Linalg::Matrix.new([[1, 2], [3, 4]])
+
+        lhs = mat * (s + t)
+        rhs = mat * s + mat * t
+
+        lhs.should eq rhs
+      end
+    end
   end
 
   describe "==(Matrix)" do
@@ -275,6 +332,135 @@ describe Linalg::Matrix do
 
       expect_raises(ArgumentError) do
         mat * vec
+      end
+    end
+    
+    it "A(u + v) = Au + Av" do
+      tests = [
+        {vecu: [1, 2, 3], vecv: [5, 2, 9]},
+        {vecu: [5, 5, 5], vecv: [0, 0, 0]},
+        {vecu: [4, -1, 8], vecv: [1, 1, 1]}
+      ]
+
+      tests.each do |test|
+        vecu = Linalg::Vector.new(test[:vecu])
+        vecv = Linalg::Vector.new(test[:vecv])
+        mat = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+        lhs = mat * (vecu + vecv)
+        rhs = mat * vecu + mat * vecv
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "A(cu) = c(Au) = (cA)u for every scalar c" do
+      mat = Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+      vec = Linalg::Vector.new([5, -1, 2])
+      scalar = -10
+
+      20.times do
+        lhs = mat * (vec * scalar)
+        rhs = (mat * scalar) * vec
+
+        lhs.should eq rhs
+
+        scalar += 1
+      end
+    end
+
+    it "(A + B)u = Au + Bu" do
+      tests = [
+        {mata: [[1, 2], [3, 4]], matb: [[2, 3], [1, 2]], vec: [1, 4]},
+        {mata: [[6, -4], [0, 1]], matb: [[4, -1], [8, 0]], vec: [8, 3]},
+        {mata: [[4, 3], [2, 1]], matb: [[2, 1], [3, 2]], vec: [4, -1]}
+      ]
+
+      tests.each do |test|
+        mata = Linalg::Matrix.new(test[:mata])
+        matb = Linalg::Matrix.new(test[:matb])
+        vec = Linalg::Vector.new(test[:vec])
+
+        lhs = (mata + matb) * vec
+        rhs = mata * vec + matb * vec
+      end
+    end
+
+    it "Ae_j = a_j for j = 1, 2..n, where e_j is the j th std vector in Rn" do
+      tests = [
+        {mat: [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]], n: 5},
+        {mat: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], n: 3}
+      ]
+
+      tests.each do |test|
+        mat = Linalg::Matrix.new(test[:mat])
+        
+        i = 0
+        mat.columns.times do
+          std_vec = Linalg::Vector(Int32).new(test[:n])
+          std_vec[i] = 1
+
+          lhs = mat * std_vec
+          rhs = mat.get_column(i)
+
+          lhs.should eq rhs
+
+          i += 1
+        end
+      end
+    end
+
+    it "A0 is the m x 1 zero vector" do
+      test_matrices = [
+        Linalg::Matrix.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+        Linalg::Matrix.new([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]),
+        Linalg::Matrix.new([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
+      ]
+
+      test_matrices.each do |test_matrix|
+        zero_vec = Linalg::Vector(Int32).new(test_matrix.columns)
+
+        lhs = test_matrix * zero_vec
+        rhs = Linalg::Vector(Int32).new(test_matrix.rows)
+
+        rhs.zero?.should be_true
+        lhs.should eq rhs
+      end
+    end
+
+    it "if 0 is the m x n zero matrix, then 0v is the m x 1 zero vector" do
+      tests = [
+        {vec: [1, 2, 3, 4, 5], rows: 5, cols: 5},
+        {vec: [6, -1, 9], rows: 1, cols: 3},
+        {vec: [-3, 0, 1, 3], rows: 8, cols: 4}
+      ]
+
+      tests.each do |test|
+        vec = Linalg::Vector.new(test[:vec])
+        zero_vec = Linalg::Matrix(Int32).new(test[:rows], test[:cols])
+
+        lhs = zero_vec * vec
+        rhs = Linalg::Vector(Int32).new(test[:rows])
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "I_n * v = v" do
+      tests = [
+        {vec: [1, 2, 3, 4, 5], identity_size: 5},
+        {vec: [6, -1, 9], identity_size: 3},
+        {vec: [-3, 0, 1, 3], identity_size: 4}
+      ]
+
+      tests.each do |test|
+        vec = Linalg::Vector.new(test[:vec])
+        identity_mat = Linalg::Matrix(Int32).new(test[:identity_size])
+
+        lhs = identity_mat * vec
+        rhs = vec
+
+        lhs.should eq rhs
       end
     end
   end
@@ -340,6 +526,79 @@ describe Linalg::Matrix do
 
       expect_raises(ArgumentError) do
         mat1 + mat2
+      end
+    end
+
+    it "A + B = B + A" do
+      tests = [
+        {mata: [[1, 2], [3, 4]], matb: [[4, 2], [1, 2]]},
+        {mata: [[5, 2], [9, 3]], matb: [[4, 0], [0, 3]]},
+        {mata: [[8, 5], [6, 1]], matb: [[-1, 6], [2, -8]]}
+      ]
+
+      tests.each do |test|
+        mata = Linalg::Matrix.new(test[:mata])
+        matb = Linalg::Matrix.new(test[:matb])
+
+        lhs = mata + matb
+        rhs = matb + mata
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "(A + B) + C = A + (B + C)" do
+      tests = [
+        {mata: [[1, 2], [3, 4]], matb: [[2, 3], [1, 2]], matc: [[4, 1], [1, 4]]},
+        {mata: [[6, -4], [0, 1]], matb: [[4, -1], [8, 0]], matc: [[8, 3], [-5, 0]]},
+        {mata: [[4, 3], [2, 1]], matb: [[2, 1], [3, 2]], matc: [[4, 1], [1, 4]]}
+      ]
+
+      tests.each do |test|
+        mata = Linalg::Matrix.new(test[:mata])
+        matb = Linalg::Matrix.new(test[:matb])
+        matc = Linalg::Matrix.new(test[:matc])
+
+        lhs = (mata + matb) + matc
+        rhs = mata + (matb + matc)
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "A + 0 = A" do
+      tests = [
+        {mat: [[1, 2, 3], [4, 5, 6]]},
+        {mat: [[5, 2, 1, -4], [-3, -2, -9, 10]]},
+        {mat: [[-3, 5, 9, 2], [1, 2, 3, 4], [-1, -1, -1, -1]]}
+      ]
+
+      tests.each do |test|
+        mat = Linalg::Matrix.new(test[:mat])
+        zero_mat = Linalg::Matrix(Int32).new(mat.rows, mat.columns)
+
+        lhs = mat + zero_mat
+        rhs = mat
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "A + (-A) = 0" do
+      tests = [
+        {mat: [[1, 2, 3], [4, 5, 6]]},
+        {mat: [[5, 2, 1, -4], [-3, -2, -9, 10]]},
+        {mat: [[-3, 5, 9, 2], [1, 2, 3, 4], [-1, -1, -1, -1]]}
+      ]
+
+      tests.each do |test|
+        mat = Linalg::Matrix.new(test[:mat])
+        zero_mat = Linalg::Matrix(Int32).new(mat.rows, mat.columns)
+
+        lhs = mat + (-mat)
+        rhs = zero_mat
+
+        lhs.should eq rhs
       end
     end
   end
@@ -533,6 +792,59 @@ describe Linalg::Matrix do
             elem.should eq expected[i][j]
           end
         end
+      end
+    end
+
+    it "(A + B).transpose = A.transpose + B.transpose" do
+      tests = [
+        {mata: [[1, 2, 3], [4, 5, 6]], matb: [[4, 1, 2], [5, 4, 2]]},
+        {mata: [[1, 2], [3, 4]], matb: [[5, 2], [4, 9]]},
+        {mata: [[9, 4, 1], [52, 3, 5]], matb: [[5, 2, 9], [2, 1, 4]]}
+      ]
+
+      tests.each do |test|
+        mata = Linalg::Matrix.new(test[:mata])
+        matb = Linalg::Matrix.new(test[:matb])
+
+        lhs = (mata + matb).transpose
+        rhs = mata.transpose + matb.transpose
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "(sA).transpose = sA.transpose" do
+      tests = [
+        {scalar: 2, mat: [[1, 2, 3], [4, 5, 6]]},
+        {scalar: 3, mat: [[1, 2], [3, 4]]},
+        {scalar: -1, mat: [[9, 4, 1], [52, 3, 5]]}
+      ]
+
+      tests.each do |test|
+        scalar = test[:scalar]
+        mat = Linalg::Matrix.new(test[:mat])
+
+        lhs = (mat * scalar).transpose
+        rhs = mat.transpose * scalar
+
+        lhs.should eq rhs
+      end
+    end
+
+    it "(A.transpose).transpose = A" do
+      tests = [
+        {mat: [[1, 2, 3], [4, 5, 6]]},
+        {mat: [[1, 2], [3, 4]]},
+        {mat: [[9, 4, 1], [52, 3, 5]]}
+      ]
+
+      tests.each do |test|
+        mat = Linalg::Matrix.new(test[:mat])
+
+        lhs = (mat.transpose).transpose
+        rhs = mat
+
+        lhs.should eq rhs
       end
     end
   end

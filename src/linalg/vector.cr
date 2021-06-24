@@ -143,6 +143,18 @@ class Linalg::Vector(T)
     return vec
   end
 
+  # Unary operator. Returns the inverted vector to `self`.
+  #
+  # ```
+  # vec = Linalg::Vector.new([1, 2, 3, 4, 5])
+  # -vec # => [-1, -2, -3, -4, -5]
+  # ```
+  def - : self
+    vec = Linalg::Vector(T).new
+    each { |e| vec << -e }
+    return vec
+  end
+
   # Vector subtraction. Subtracts *other* from `self` and returns a new `Linalg::Vector`.
   #
   # ```
